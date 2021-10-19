@@ -1,25 +1,49 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import { useLocalStore, useObserver } from "mobx-react";
+import GroceryHeader from './GroceryHeader';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+export const StoreContext = React.createContext();
+
+const StoreProvider = ({children}) =>{
+  const store = useLocalStore(() => ({
+    gorceryItems: [],
+    addItem : (item) =>{
+      store.gorceryItems.push(item);
+    },
+    get itemCount() {
+      return store.gorceryItems.length;
+    }
+  }))
+
+  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
 }
 
-export default App;
+
+const GorceryList = () => {
+  const store = React.useContext(StoreContext);
+  return useObserver(() => (<ul>
+    {store.gorceryItems.map((itm) => <li>{itm}</li>)}
+  </ul>));
+}
+
+const GroceryForm = () =>{
+  const [name,setName] = useState("");
+  const store = React.useContext(StoreContext);
+  return(  <div>
+    <input type="text" value={name} onChange={(e) => setName(e.target.value)}/>
+    <button onClick={(e) => {store.addItem(name);setName("")} }>Add</button>
+  </div>    
+  )
+}
+
+export default function App() {
+  return (
+    <StoreProvider>
+      <main>
+        <GroceryHeader/>
+        <GorceryList/>
+        <GroceryForm/>
+      </main>
+    </StoreProvider>
+  );
+}
